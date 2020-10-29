@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v2.2
+    ports:
+      - "8081:8080" # traefik dashboard
+      - target: 80
+        published: 90
+        mode: host # allows us to see real remote ips (default docker ingress strips remote ip information)
+      - target: 1935
+        published: 1935
+        mode: host
+    command:
+      - --api.insecure=true # set to 'false' on production
+      - --api.dashboard=true # see https://docs.traefik.io/v2.0/operations/dashboard/#secure-mode for how to secure the dashboard
+      - --api.debug=false # enable additional endpoints for debugging and profiling
+      - --log.level=INFO # debug while we get it working, for more levels/info see https://docs.traefik.io/observability/logs/
+      - --providers.docker=true
+      - --providers.docker.swarmMode=true
+      - --providers.docker.network="proxy_internal" # used as the "internal" network to talk to applications
+      - --entrypoints.web.address=:80
+      - --entryPoints.web.forwardedHeaders.trustedIPs=10.0.0.0/16
+      - --entrypoints.rtmp.address=:1935
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # to watch docker events
+    networks:
+      - internal
+    deploy:
+      labels:
+        - "traefik.enable=false"
+
+networks:
+  internal: # becomes 'proxy_internal'
+    driver: overlay # docker's "shovel"-like networking
