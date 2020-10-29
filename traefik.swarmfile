@@ -1,8 +1,9 @@
+# docker stack deploy -c traefik.swarmfile proxy
 version: "3.8"
 
 services:
   traefik:
-    image: traefik:v2.2
+    image: traefik:v2.3
     ports:
       - "8081:8080" # traefik dashboard
       - target: 80
@@ -32,4 +33,4 @@ services:
 
 networks:
   internal: # becomes 'proxy_internal'
-    driver: overlay # docker's "shovel"-like networking
+    driver: overlay
