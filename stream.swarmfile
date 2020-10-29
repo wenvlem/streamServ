@@ -1,25 +1,26 @@
+# docker stack deploy -c stream.swarmfile stream
 version: "3.8"
 
 services:
   live:
-    image: "localhost:5000/livego:1.0.17"
+    image: "localhost:5000/livego:1.0.22"
     networks:
       - proxy_internal
     volumes:
       - historic:/tmp/live
     deploy:
       labels:
-        - "traefik.http.routers.stream_live_view.rule=Host(`view.popcorn.io`)"
+        - "traefik.http.routers.stream_live_view.rule=Host(`live.popcorn.io`)"
         - "traefik.http.routers.stream_live_view.entrypoints=web" 
         - "traefik.http.routers.stream_live_view.service=stream_live_view"
-        - "traefik.http.middlewares.stream_live.replacepath.path=/live/greg.flv"
+        - "traefik.http.routers.stream_live_view.middlewares=stream_live_view"
+        - "traefik.http.middlewares.stream_live_view.replacepath.path=/live/greg.flv"
         - "traefik.http.services.stream_live_view.loadbalancer.server.port=7001"
-        # - "traefik.tcp.routers.stream_live_send.rule=HostSNI(`live.popcorn.io`)"
         - "traefik.tcp.routers.stream_live_send.rule=HostSNI(`*`)"
         - "traefik.tcp.routers.stream_live_send.entrypoints=rtmp" 
         - "traefik.tcp.routers.stream_live_send.service=stream_live_send" 
         - "traefik.tcp.services.stream_live_send.loadbalancer.server.port=1935"
-        - "traefik.http.routers.stream_live_setup.rule=Host(`stream.popcorn.io`)"
+        - "traefik.http.routers.stream_live_setup.rule=Host(`config.popcorn.io`)"
         - "traefik.http.routers.stream_live_setup.entrypoints=web" 
         - "traefik.http.routers.stream_live_setup.service=stream_live_setup"
         - "traefik.http.services.stream_live_setup.loadbalancer.server.port=8090"
@@ -31,8 +32,11 @@ services:
       - historic:/historic
     deploy:
       labels:
-        - "traefik.http.routers.stream_dead.rule=Host(`dead.popcorn.io`)"
+        - "traefik.http.routers.stream_dead.rule=Host(`view.popcorn.io`)"
+        - "traefik.http.routers.stream_dead.service=stream_dead"
+        - "traefik.http.routers.stream_dead.middlewares=stream_dead"
         - "traefik.http.services.stream_dead.loadbalancer.server.port=8000"
+        - "traefik.http.routers.stream_dead.entrypoints=web" 
         - "traefik.http.middlewares.stream_dead.replacepath.path=/gallery.html"
 
 networks:
